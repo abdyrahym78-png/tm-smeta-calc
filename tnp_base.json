@@ -1,0 +1,15 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "region": "Turkmenistan",
+    "base_official_rate_usd_tmt": 3.5,
+    "default_seismic_rate": 1.15
+  },
+  "coefficients": {
+    "seismic_9_plus": 1.15,
+    "overhead_costs_percent": 12.5,
+    "estimated_profit_percent": 8,
+    "unforeseen_expenses_percent": 2
+  },
+  "categories": []
+}
