@@ -1,3 +1,29 @@
+
+const { GoogleAIFileManager } = require('@google/generative-ai/server');
+const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY || '');
+
+async function processUploadedFiles(files) {
+  if (!files || files.length === 0) return [];
+  const uploadedFiles = [];
+  
+  for (const file of files) {
+    console.log(`📦 Загрузка в Google AI Studio: ${file.originalname}...`);
+    const uploadResult = await fileManager.uploadFile(file.path, {
+      mimeType: file.mimetype,
+      displayName: file.originalname,
+    });
+    uploadedFiles.push(uploadResult.file);
+  }
+  return uploadedFiles;
+}
+
+function cleanupLocalFiles(files) {
+  if (!files) return;
+  files.forEach(f => {
+    if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
+  });
+}
+
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
@@ -7,7 +33,8 @@ const swaggerDocument = require('./swagger.json');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '150mb' }));
+app.use(express.urlencoded({ limit: '150mb', extended: true }));
 
 const upload = multer({ storage: multer.memoryStorage() });
 const API_KEY_SECRET = 'sitex-demo-key-2026';

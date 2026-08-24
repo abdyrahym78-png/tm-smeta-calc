@@ -1,0 +1,8 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Smeta API",
+    "version": "2.5.0"
+  },
+  "paths": {}
+}

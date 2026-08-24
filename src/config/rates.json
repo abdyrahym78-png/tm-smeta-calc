@@ -1,0 +1,19 @@
+{
+  "officialUsdRate": 3.50,
+  "ratesPerSqMeter": {
+    "Косметический": 350,
+    "Капитальный": 750,
+    "Дизайнерский": 1400
+  },
+  "budgetSplit": {
+    "materials": 0.60,
+    "labor": 0.40
+  },
+  "materialsPrices": {
+    "plaster": { "name": "Штукатурка и шпатлевка", "unit": "меш.", "priceTmt": 65, "ratio": 0.8 },
+    "primer": { "name": "Грунтовка 10л", "unit": "канистра", "priceTmt": 120, "ratio": 0.03 },
+    "cable": { "name": "Кабель ВВГнг", "unit": "м", "priceTmt": 18, "ratio": 3.5 },
+    "laminate": { "name": "Напольное покрытие", "unit": "м²", "priceTmt": 110, "ratio": 1.08 },
+    "drywall": { "name": "Гипсокартон", "unit": "м²", "priceTmt": 60, "ratio": 1.05 }
+  }
+}
