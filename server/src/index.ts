@@ -7,6 +7,9 @@ import { projectsRouter } from './routes/projects';
 import { estimatesRouter } from './routes/estimates';
 import { bimRouter } from './routes/bim';
 import { exportRouter } from './routes/export';
+import { authRouter } from './routes/auth';
+import { PdfExporter } from './services/pdfExporter';
+import { authMiddleware } from './middleware/auth';
 
 export const app = express();
 app.use(express.json());
@@ -24,20 +27,33 @@ app.use(middleware.handle(i18next));
 
 const swaggerDocument = {
   openapi: '3.0.0',
-  info: { title: 'TM-Smeta API', version: '3.0.0' },
+  info: { title: 'TM-Smeta API', version: '4.0.0' },
   paths: {
-    '/api/v1/bim/map': { post: { summary: 'Map BIM code to normative rate', responses: { 200: { description: 'OK' } } } },
-    '/api/v1/bim/regions': { get: { summary: 'Get regional coefficients list', responses: { 200: { description: 'OK' } } } },
-    '/api/v1/estimates/{id}/export': { get: { summary: 'Export estimate (json/csv/html)', responses: { 200: { description: 'OK' } } } }
+    '/api/v1/auth/login': { post: { summary: 'JWT authorization login', responses: { 200: { description: 'OK' } } } },
+    '/api/v1/estimates/{id}/pdf': { get: { summary: 'Generate printable HTML/PDF estimate document', responses: { 200: { description: 'OK' } } } }
   }
 };
 
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-app.use('/api/v1/projects', projectsRouter);
+app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/projects', authMiddleware(['ADMIN', 'ENGINEER']), projectsRouter);
 app.use('/api/v1/estimates', estimatesRouter);
 app.use('/api/v1/bim', bimRouter);
 app.use('/api/v1/estimates', exportRouter);
+
+app.get('/api/v1/estimates/:id/pdf', (req: Request, res: Response) => {
+  const mockEstimate = {
+    id: req.params.id,
+    title: 'Печатная смета проекта',
+    totalAmount: 12500.0,
+    currency: 'TMT',
+    items: [{ id: '1', quantity: 25, unitPrice: 500, totalPrice: 12500 }]
+  };
+  const html = PdfExporter.generateEstimateHtml(mockEstimate);
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
+});
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(3000, () => console.log('Server running on port 3000. Docs at /docs'));
