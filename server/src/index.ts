@@ -1,14 +1,13 @@
 import express, { Request, Response } from 'express';
 
-const app = express();
+export const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Роутер API V1
 const apiRouter = express.Router();
 
-// 1. Список нормативных баз
+// Список нормативных баз
 apiRouter.get('/standards', (req: Request, res: Response) => {
   res.json({
     success: true,
@@ -16,17 +15,17 @@ apiRouter.get('/standards', (req: Request, res: Response) => {
   });
 });
 
-// 2. Пример авторизации
+// Авторизация
 apiRouter.post('/auth/login', (req: Request, res: Response) => {
-  const { username } = req.body;
+  const { username, role = 'ENGINEER' } = req.body;
   res.json({
     success: true,
     token: "mock-jwt-token-xyz123",
-    user: { username: username || "guest" }
+    user: { username: username || "guest", role }
   });
 });
 
-// 3. BIM-маппинг
+// BIM-маппинг
 apiRouter.post('/bim/map', (req: Request, res: Response) => {
   const { classificationCode } = req.body;
   res.json({
@@ -39,14 +38,47 @@ apiRouter.post('/bim/map', (req: Request, res: Response) => {
   });
 });
 
-// Монтируем роуты V1
+// Расчет сметы (прямые затраты + накладные расходы + НДС)
+apiRouter.post('/estimates', (req: Request, res: Response) => {
+  const { title, items = [], regionId = 'TM-AS', currency = 'TMT' } = req.body;
+
+  let totalDirect = 0;
+  const processedItems = items.map((item: any, idx: number) => {
+    const qty = item.quantity || 1;
+    const price = item.unitPrice || 100;
+    const itemTotal = qty * price;
+    totalDirect += itemTotal;
+    return { id: idx + 1, ...item, itemTotal };
+  });
+
+  const overhead = totalDirect * 0.10;
+  const tax = (totalDirect + overhead) * 0.15;
+  const totalAmount = totalDirect + overhead + tax;
+
+  res.json({
+    success: true,
+    estimate: {
+      id: `est_${Date.now()}`,
+      title: title || 'Расчетная смета',
+      regionId,
+      currency,
+      totalDirect,
+      overhead,
+      tax,
+      totalAmount,
+      items: processedItems
+    }
+  });
+});
+
 app.use('/api/v1', apiRouter);
 
-// Корневой маршрут проверки здоровья
 app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date() });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server ready at http://localhost:${PORT}/api/v1`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server ready at http://localhost:${PORT}/api/v1`);
+  });
+}
