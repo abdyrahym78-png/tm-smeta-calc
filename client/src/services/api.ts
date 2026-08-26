@@ -54,3 +54,21 @@ export async function calculateEstimate(payload: CalculateEstimatePayload): Prom
   }
   return res.json();
 }
+
+export async function exportKS2KS3Document(payload: any): Promise<void> {
+  const res = await fetch(`${API_BASE}/estimates/export-pdf`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Ошибка выгрузки файла');
+  
+  const htmlText = await res.text();
+  const printWindow = window.open('', '_blank');
+  if (printWindow) {
+    printWindow.document.write(htmlText);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 500);
+  }
+}
