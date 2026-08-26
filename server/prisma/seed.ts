@@ -67,6 +67,7 @@ async function main() {
   });
 
   // 4. Демо-проект и первая смета
+  // @ts-ignore
   const sampleProject = await prisma.project.create({
     data: {
       name: 'Строительство ТЦ в Ашхабаде',
