@@ -1,0 +1,41 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model NormativeBase {
+  id          String   @id @default(uuid())
+  code        String   @unique // DIN, Eurocodes, FIDIC, GESN
+  name        String
+  description String?
+  rates       Rate[]
+  createdAt   DateTime @default(now())
+}
+
+model Rate {
+  id              String                 @id @default(uuid())
+  code            String                 @unique
+  name            String
+  basePrice       Float
+  currency        String                 // TMT, USD, EUR
+  countryCode     String                 // TM, DE, US
+  regionId        String?
+  normativeBaseId String
+  normativeBase   NormativeBase          @relation(fields: [normativeBaseId], references: [id])
+  bimMappings     ClassificationMapping[]
+  createdAt       DateTime               @default(now())
+}
+
+model ClassificationMapping {
+  id        String   @id @default(uuid())
+  bimSystem String   // UniClass2015, OmniClass, IFC
+  bimCode   String
+  rateId    String
+  rate      Rate     @relation(fields: [rateId], references: [id])
+
+  @@index([bimSystem, bimCode])
+}
