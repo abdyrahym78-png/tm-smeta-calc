@@ -7,6 +7,13 @@ app.use(express.json());
 
 const apiRouter = express.Router();
 
+// Курсы валют по умолчанию
+const DEFAULT_RATES = {
+  OFFICIAL_USD: 3.50,
+  MARKET_USD: 19.50,
+  MARKET_EUR: 21.20
+};
+
 // 1. Список нормативных баз
 apiRouter.get('/standards', (req: Request, res: Response) => {
   res.json({
@@ -15,7 +22,16 @@ apiRouter.get('/standards', (req: Request, res: Response) => {
   });
 });
 
-// 2. Справочник расценок
+// 2. Справочник валют и курсов
+apiRouter.get('/currencies', (req: Request, res: Response) => {
+  res.json({
+    success: true,
+    rates: DEFAULT_RATES,
+    updatedAt: new Date().toISOString()
+  });
+});
+
+// 3. Справочник расценок
 apiRouter.get('/rates', (req: Request, res: Response) => {
   const { country = 'TM', bimSystem } = req.query;
   res.json({
@@ -35,7 +51,7 @@ apiRouter.get('/rates', (req: Request, res: Response) => {
   });
 });
 
-// 3. Авторизация
+// 4. Авторизация
 apiRouter.post('/auth/login', (req: Request, res: Response) => {
   const { username, role = 'ENGINEER' } = req.body;
   res.json({
@@ -45,7 +61,7 @@ apiRouter.post('/auth/login', (req: Request, res: Response) => {
   });
 });
 
-// 4. BIM-маппинг
+// 5. BIM-маппинг
 apiRouter.post('/bim/map', (req: Request, res: Response) => {
   const { classificationCode } = req.body;
   res.json({
@@ -58,34 +74,77 @@ apiRouter.post('/bim/map', (req: Request, res: Response) => {
   });
 });
 
-// 5. Расчет сметы
+// 6. Мультивалютный расчет сметы (разделение государственных и рыночных затрат)
 apiRouter.post('/estimates', (req: Request, res: Response) => {
-  const { title, items = [], regionId = 'TM-AS', currency = 'TMT' } = req.body;
+  const {
+    title,
+    items = [],
+    regionId = 'TM-AS',
+    targetCurrency = 'TMT',
+    customMarketRate = DEFAULT_RATES.MARKET_USD,
+    customOfficialRate = DEFAULT_RATES.OFFICIAL_USD
+  } = req.body;
 
-  let totalDirect = 0;
+  let totalDirectTmt = 0;
+  let totalDirectUsd = 0;
+
   const processedItems = items.map((item: any, idx: number) => {
     const qty = item.quantity || 1;
     const price = item.unitPrice || 100;
-    const itemTotal = qty * price;
-    totalDirect += itemTotal;
-    return { id: idx + 1, ...item, itemTotal };
+    const itemCurrency = (item.currency || 'TMT').toUpperCase();
+    const isStatePayment = item.isStatePayment || false;
+
+    let priceInTmt = price;
+    let priceInUsd = price;
+
+    if (itemCurrency === 'USD') {
+      const rateToUse = isStatePayment ? customOfficialRate : customMarketRate;
+      priceInTmt = price * rateToUse;
+    } else if (itemCurrency === 'TMT') {
+      const rateToUse = isStatePayment ? customOfficialRate : customMarketRate;
+      priceInUsd = price / rateToUse;
+    }
+
+    const itemTotalTmt = qty * priceInTmt;
+    const itemTotalUsd = qty * priceInUsd;
+
+    totalDirectTmt += itemTotalTmt;
+    totalDirectUsd += itemTotalUsd;
+
+    return {
+      id: idx + 1,
+      ...item,
+      priceInTmt,
+      priceInUsd,
+      itemTotalTmt,
+      itemTotalUsd
+    };
   });
 
-  const overhead = totalDirect * 0.10;
-  const tax = (totalDirect + overhead) * 0.15;
-  const totalAmount = totalDirect + overhead + tax;
+  const overheadTmt = totalDirectTmt * 0.10;
+  const taxTmt = (totalDirectTmt + overheadTmt) * 0.15;
+  const totalAmountTmt = totalDirectTmt + overheadTmt + taxTmt;
+
+  const totalAmountUsd = totalAmountTmt / customMarketRate;
 
   res.json({
     success: true,
     estimate: {
       id: `est_${Date.now()}`,
-      title: title || 'Расчетная смета',
+      title: title || 'Мультивалютная смета',
       regionId,
-      currency,
-      totalDirect,
-      overhead,
-      tax,
-      totalAmount,
+      targetCurrency,
+      exchangeRatesUsed: {
+        officialUsd: customOfficialRate,
+        marketUsd: customMarketRate
+      },
+      summary: {
+        totalDirectTmt: Math.round(totalDirectTmt * 100) / 100,
+        overheadTmt: Math.round(overheadTmt * 100) / 100,
+        taxTmt: Math.round(taxTmt * 100) / 100,
+        totalAmountTmt: Math.round(totalAmountTmt * 100) / 100,
+        totalAmountUsd: Math.round(totalAmountUsd * 100) / 100
+      },
       items: processedItems
     }
   });
