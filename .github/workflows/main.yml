@@ -25,7 +25,9 @@ jobs:
         run: npm install
 
       - name: Generate Prisma Client
-        run: cd server/prisma && npx prisma generate
+        run: npx prisma generate --schema=server/prisma/schema.prisma
+        env:
+          DATABASE_URL: "postgresql://user:pass@localhost:5432/db"
 
       - name: Type check TypeScript
         run: npx tsc --noEmit
@@ -38,4 +40,3 @@ jobs:
         env:
           NODE_ENV: production
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        
