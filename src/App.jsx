@@ -47,7 +47,7 @@ export default function App() {
   const [objectType, setObjectType] = useState('Многоэтажный жилой дом');
   const [area, setArea] = useState(60);
   const [repairClass, setRepairClass] = useState('Капитальный');
-  const [selectedWorks, setSelectedWorks] = useState(DEFAULT_WORKS || []);
+  const [selectedWorks, setSelectedWorks] = useState([1, 2, 3, 4]);
   const [manualResult, setManualResult] = useState(null);
 
   const [clientName, setClientName] = useState('ИП "Заказчик"');
@@ -77,13 +77,20 @@ export default function App() {
     if (objectType === 'Многоэтажный жилой дом' || repairClass === 'Многоэтажка') ratePerM2 = rates.multi || 950;
 
     const baseTotal = area * ratePerM2;
+    
+    // Считаем выбранные доп. работы
+    const selectedWorksTotal = (DEFAULT_WORKS || [])
+      .filter(w => (selectedWorks || []).includes(w.id))
+      .reduce((acc, w) => acc + (w.price * area), 0);
+
     const customTotal = (customItems || []).reduce((acc, item) => acc + (item.price || 0), 0);
-    const grandTotalTmt = baseTotal + customTotal;
+    const grandTotalTmt = baseTotal + selectedWorksTotal + customTotal;
 
     setManualResult({
       area, objectType, repairClass, calcMode,
       materialsTmt: grandTotalTmt * (rates.matRatio / 100),
       laborTmt: grandTotalTmt * (1 - rates.matRatio / 100),
+      selectedWorksTotal,
       grandTotalTmt,
       date: new Date().toLocaleDateString()
     });
@@ -147,4 +154,3 @@ export default function App() {
     </ErrorBoundary>
   );
 }
-// Force update: Fri Aug 28 13:20:14 +05 2026

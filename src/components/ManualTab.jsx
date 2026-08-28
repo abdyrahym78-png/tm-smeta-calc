@@ -6,9 +6,13 @@ export default function ManualTab({
   area, setArea, repairClass, setRepairClass, calcMode, selectedWorks = [], setSelectedWorks,
   DEFAULT_WORKS = [], handleManualCalculate, manualResult, formatVal, exportToExcel, setShowContract
 }) {
-  const toggleWork = (w) => {
+  const toggleWork = (wId) => {
     if (!setSelectedWorks) return;
-    setSelectedWorks(prev => (prev || []).includes(w) ? (prev || []).filter(x => x !== w) : [...(prev || []), w]);
+    if (selectedWorks.includes(wId)) {
+      setSelectedWorks(selectedWorks.filter(id => id !== wId));
+    } else {
+      setSelectedWorks([...selectedWorks, wId]);
+    }
   };
 
   const addCustomItem = () => {
@@ -64,6 +68,22 @@ export default function ManualTab({
           </div>
         </div>
 
+        <div style={{ marginBottom: '12px', background: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+          <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>🛠 Включить виды работ:</label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+            {(DEFAULT_WORKS || []).map(w => (
+              <label key={w.id} style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={selectedWorks.includes(w.id)}
+                  onChange={() => toggleWork(w.id)}
+                />
+                {w.name} ({w.price} TMT/{w.unit})
+              </label>
+            ))}
+          </div>
+        </div>
+
         <button onClick={handleManualCalculate} style={{ width: '100%', padding: '10px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>
           {t?.genEstimate || '✨ Рассчитать смету'}
         </button>
@@ -73,6 +93,9 @@ export default function ManualTab({
             <h4 style={{ margin: '0 0 6px 0', color: '#15803d', fontSize: '13px' }}>📊 Готовая смета ({manualResult.objectType}):</h4>
             <p style={{ margin: '2px 0', fontSize: '12px' }}>• {t?.materials || 'Материалы'}: <strong>{formatVal(manualResult.materialsTmt)}</strong></p>
             <p style={{ margin: '2px 0', fontSize: '12px' }}>• {t?.labor || 'Работы'}: <strong>{formatVal(manualResult.laborTmt)}</strong></p>
+            {manualResult.selectedWorksTotal > 0 && (
+              <p style={{ margin: '2px 0', fontSize: '12px' }}>• Выбранные работы: <strong>{formatVal(manualResult.selectedWorksTotal)}</strong></p>
+            )}
             <h3 style={{ color: '#16a34a', margin: '6px 0', fontSize: '15px' }}>{t?.total || 'Итого'}: {formatVal(manualResult.grandTotalTmt)}</h3>
             <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
               <button onClick={exportToExcel} style={{ flex: 1, padding: '8px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>{t?.exportExcel || 'Скачать CSV'}</button>
