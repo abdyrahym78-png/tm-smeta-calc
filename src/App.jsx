@@ -3,7 +3,6 @@ import { i18n, DEFAULT_WORKS } from './constants';
 import ContractModal from './components/ContractModal';
 import ManualTab from './components/ManualTab';
 import FileUploader from './components/FileUploader';
-import AdminPanel from './components/AdminPanel';
 
 export default function App() {
   const [lang, setLang] = useState('RU');
@@ -22,13 +21,13 @@ export default function App() {
   const [objectType, setObjectType] = useState('Квартира');
   const [area, setArea] = useState(60);
   const [repairClass, setRepairClass] = useState('Капитальный');
-  const [selectedWorks, setSelectedWorks] = useState(DEFAULT_WORKS);
+  const [selectedWorks, setSelectedWorks] = useState(DEFAULT_WORKS || []);
   const [manualResult, setManualResult] = useState(null);
 
   const [clientName, setClientName] = useState('ИП "Заказчик"');
   const [contractorName, setContractorName] = useState('ХО "Строитель-Х"');
 
-  const t = i18n[lang];
+  const t = i18n[lang] || i18n['RU'];
 
   const handleAddCustomItem = () => {
     if (!newItemName.trim() || !newItemPrice || Number(newItemPrice) <= 0) {
@@ -49,6 +48,7 @@ export default function App() {
     let ratePerM2 = rates.cosmetic;
     if (repairClass === 'Капитальный') ratePerM2 = rates.capital;
     if (repairClass === 'Дизайнерский') ratePerM2 = rates.designer;
+    if (repairClass === 'Многоэтажка') ratePerM2 = 950;
 
     const baseTotal = area * ratePerM2;
     const customTotal = customItems.reduce((acc, item) => acc + item.price, 0);
@@ -76,7 +76,6 @@ export default function App() {
 
   return (
     <div style={{ maxWidth: '650px', margin: '0 auto', padding: '16px', fontFamily: 'sans-serif', color: '#1e293b', background: '#f8fafc', minHeight: '100vh' }}>
-      {/* Шапка управления */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', background: '#fff', padding: '8px 12px', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
         <div style={{ display: 'flex', gap: '4px' }}>
           {['RU', 'TK', 'EN'].map(l => (
@@ -94,9 +93,8 @@ export default function App() {
         </div>
       </div>
 
-      <h2 style={{ textAlign: 'center', color: '#1d4ed8', margin: '0 0 12px 0', fontSize: '18px' }}>{t.title}</h2>
+      <h2 style={{ textAlign: 'center', color: '#1d4ed8', margin: '0 0 12px 0', fontSize: '18px' }}>{t?.title || 'Сметный ИИ-Сервис'}</h2>
 
-      {/* Основной калькулятор */}
       <ManualTab
         t={t} showAdmin={showAdmin} setShowAdmin={setShowAdmin} rates={rates} setRates={setRates}
         customItems={customItems} setCustomItems={setCustomItems} newItemName={newItemName} setNewItemName={setNewItemName}
@@ -107,12 +105,10 @@ export default function App() {
         formatVal={formatVal} exportToExcel={exportToExcel} setShowContract={setShowContract}
       />
 
-      {/* Блок загрузки документов/чертежей */}
       <div style={{ marginTop: '16px' }}>
         <FileUploader />
       </div>
 
-      {/* Модальное окно договора */}
       <ContractModal
         show={showContract} manualResult={manualResult} clientName={clientName} setClientName={setClientName}
         contractorName={contractorName} setContractorName={setContractorName} formatVal={formatVal} t={t}
