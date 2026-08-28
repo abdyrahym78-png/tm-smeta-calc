@@ -1,15 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, Component } from 'react';
 import { i18n, DEFAULT_WORKS } from './constants';
-import ContractModal from './components/ContractModal';
 import ManualTab from './components/ManualTab';
 import FileUploader from './components/FileUploader';
+import ContractModal from './components/ContractModal';
+
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("React Error Boundary caught an error", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '20px', color: 'red', background: '#fff', margin: '20px', borderRadius: '8px', border: '2px solid red' }}>
+          <h3>❌ Ошибка отрисовки компонента:</h3>
+          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '12px' }}>
+            {this.state.error && this.state.error.toString()}
+          </pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function App() {
   const [lang, setLang] = useState('RU');
   const [currency, setCurrency] = useState('TMT');
   const [usdRate, setUsdRate] = useState(19.5);
 
-  const [activeTab, setActiveTab] = useState('manual');
   const [calcMode, setCalcMode] = useState('repair');
   const [showAdmin, setShowAdmin] = useState(false);
   const [showContract, setShowContract] = useState(false);
@@ -76,51 +101,49 @@ export default function App() {
   };
 
   return (
-    <div style={{ maxWidth: '650px', margin: '0 auto', padding: '16px', fontFamily: 'sans-serif', color: '#1e293b', background: '#f8fafc', minHeight: '100vh' }}>
-      {/* Переключение языков и валют */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', background: '#fff', padding: '8px 12px', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
-        <div style={{ display: 'flex', gap: '4px' }}>
-          {['RU', 'TK', 'EN'].map(l => (
-            <button key={l} onClick={() => setLang(l)} style={{ padding: '4px 8px', fontSize: '11px', fontWeight: 'bold', borderRadius: '4px', border: 'none', cursor: 'pointer', background: lang === l ? '#2563eb' : '#f1f5f9', color: lang === l ? '#fff' : '#475569' }}>{l}</button>
-          ))}
+    <ErrorBoundary>
+      <div style={{ maxWidth: '650px', margin: '0 auto', padding: '16px', fontFamily: 'sans-serif', color: '#1e293b', background: '#f8fafc', minHeight: '100vh' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', background: '#fff', padding: '8px 12px', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
+          <div style={{ display: 'flex', gap: '4px' }}>
+            {['RU', 'TK', 'EN'].map(l => (
+              <button key={l} onClick={() => setLang(l)} style={{ padding: '4px 8px', fontSize: '11px', fontWeight: 'bold', borderRadius: '4px', border: 'none', cursor: 'pointer', background: lang === l ? '#2563eb' : '#f1f5f9', color: lang === l ? '#fff' : '#475569' }}>{l}</button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <select value={currency} onChange={e => setCurrency(e.target.value)} style={{ padding: '4px', fontSize: '11px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: 'bold' }}>
+              <option value="TMT">TMT (m)</option>
+              <option value="USD">USD ($)</option>
+            </select>
+            {currency === 'USD' && (
+              <input type="number" value={usdRate} onChange={e => setUsdRate(Number(e.target.value))} style={{ width: '45px', padding: '2px', fontSize: '11px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+            )}
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-          <select value={currency} onChange={e => setCurrency(e.target.value)} style={{ padding: '4px', fontSize: '11px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: 'bold' }}>
-            <option value="TMT">TMT (m)</option>
-            <option value="USD">USD ($)</option>
-          </select>
-          {currency === 'USD' && (
-            <input type="number" value={usdRate} onChange={e => setUsdRate(Number(e.target.value))} style={{ width: '45px', padding: '2px', fontSize: '11px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
-          )}
-        </div>
-      </div>
 
-      <h2 style={{ textAlign: 'center', color: '#1d4ed8', margin: '0 0 12px 0', fontSize: '18px' }}>{t.title || 'Сметный ИИ-Сервис («Сайт Х»)'}</h2>
+        <h2 style={{ textAlign: 'center', color: '#1d4ed8', margin: '0 0 12px 0', fontSize: '18px' }}>{t?.title || 'Сметный ИИ-Сервис («Сайт Х»)'}</h2>
 
-      {/* Основной блок сметы */}
-      <ManualTab
-        t={t} showAdmin={showAdmin} setShowAdmin={setShowAdmin} rates={rates} setRates={setRates}
-        customItems={customItems} setCustomItems={setCustomItems} newItemName={newItemName} setNewItemName={setNewItemName}
-        newItemPrice={newItemPrice} setNewItemPrice={setNewItemPrice} handleAddCustomItem={handleAddCustomItem}
-        objectType={objectType} setObjectType={setObjectType} area={area} setArea={setArea} repairClass={repairClass}
-        setRepairClass={setRepairClass} calcMode={calcMode} selectedWorks={selectedWorks} setSelectedWorks={setSelectedWorks}
-        DEFAULT_WORKS={DEFAULT_WORKS} handleManualCalculate={handleManualCalculate} manualResult={manualResult}
-        formatVal={formatVal} exportToExcel={exportToExcel} setShowContract={setShowContract}
-      />
-
-      {/* Блок загрузки документов */}
-      <div style={{ marginTop: '16px' }}>
-        <FileUploader />
-      </div>
-
-      {/* Договор */}
-      {ContractModal && (
-        <ContractModal
-          show={showContract} manualResult={manualResult} clientName={clientName} setClientName={setClientName}
-          contractorName={contractorName} setContractorName={setContractorName} formatVal={formatVal} t={t}
-          onClose={() => setShowContract(false)}
+        <ManualTab
+          t={t} showAdmin={showAdmin} setShowAdmin={setShowAdmin} rates={rates} setRates={setRates}
+          customItems={customItems} setCustomItems={setCustomItems} newItemName={newItemName} setNewItemName={setNewItemName}
+          newItemPrice={newItemPrice} setNewItemPrice={setNewItemPrice} handleAddCustomItem={handleAddCustomItem}
+          objectType={objectType} setObjectType={setObjectType} area={area} setArea={setArea} repairClass={repairClass}
+          setRepairClass={setRepairClass} calcMode={calcMode} selectedWorks={selectedWorks} setSelectedWorks={setSelectedWorks}
+          DEFAULT_WORKS={DEFAULT_WORKS} handleManualCalculate={handleManualCalculate} manualResult={manualResult}
+          formatVal={formatVal} exportToExcel={exportToExcel} setShowContract={setShowContract}
         />
-      )}
-    </div>
+
+        <div style={{ marginTop: '16px' }}>
+          <FileUploader />
+        </div>
+
+        {ContractModal && (
+          <ContractModal
+            show={showContract} manualResult={manualResult} clientName={clientName} setClientName={setClientName}
+            contractorName={contractorName} setContractorName={setContractorName} formatVal={formatVal} t={t}
+            onClose={() => setShowContract(false)}
+          />
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
