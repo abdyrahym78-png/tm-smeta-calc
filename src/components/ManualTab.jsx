@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function ManualTab({
   t = {}, lang = 'RU', showAdmin, setShowAdmin, rates, setRates, customItems = [], setCustomItems,
-  newItemName, setNewItemName, newItemPrice, setNewItemPrice, objectType, setObjectType,
+  newItemName, setNewItemName, newItemPrice, setNewItemPrice, handleAddCustomItem, objectType, setObjectType,
   area, setArea, repairClass, setRepairClass, calcMode, selectedWorks = [], setSelectedWorks,
   DEFAULT_WORKS = [], handleManualCalculate, manualResult, formatVal, exportToExcel, setShowContract
 }) {
@@ -15,11 +15,8 @@ export default function ManualTab({
     }
   };
 
-  const addCustomItem = () => {
-    if (!newItemName || !newItemPrice) return;
-    setCustomItems([...(customItems || []), { name: newItemName, price: Number(newItemPrice) }]);
-    setNewItemName('');
-    setNewItemPrice('');
+  const removeItem = (index) => {
+    setCustomItems(customItems.filter((_, i) => i !== index));
   };
 
   return (
@@ -41,12 +38,26 @@ export default function ManualTab({
               <input type="number" value={rates?.capital || 750} onChange={e => setRates({...rates, capital: Number(e.target.value)})} style={{ width: '100%', padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }} />
             </div>
           </div>
+
           <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '8px', marginTop: '6px' }}>
+            <label style={{ fontSize: '10px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>Добавить доп. расценку/услугу:</label>
             <div style={{ display: 'flex', gap: '4px' }}>
-              <input placeholder="Название" value={newItemName} onChange={e => setNewItemName(e.target.value)} style={{ flex: 2, padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }} />
+              <input placeholder="Название (напр. Вывоз мусора)" value={newItemName} onChange={e => setNewItemName(e.target.value)} style={{ flex: 2, padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }} />
               <input placeholder="TMT" type="number" value={newItemPrice} onChange={e => setNewItemPrice(e.target.value)} style={{ flex: 1, padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '11px' }} />
-              <button onClick={addCustomItem} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: '4px', padding: '0 10px', fontWeight: 'bold' }}>+</button>
+              <button onClick={handleAddCustomItem} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: '4px', padding: '0 12px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>+</button>
             </div>
+
+            {/* Список добавленных пользовательских позиций */}
+            {customItems.length > 0 && (
+              <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {customItems.map((item, idx) => (
+                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '11px' }}>
+                    <span>{item.name} — <strong>{formatVal(item.price)}</strong></span>
+                    <button onClick={() => removeItem(idx)} style={{ background: 'none', border: 'none', color: '#ef4444', fontWeight: 'bold', cursor: 'pointer', padding: '0 4px' }}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
