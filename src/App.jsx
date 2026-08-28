@@ -60,7 +60,7 @@ export default function App() {
       alert('Заполните название расценки и сумму TMT');
       return;
     }
-    setCustomItems([...customItems, { name: newItemName.trim(), price: Number(newItemPrice) }]);
+    setCustomItems([...(customItems || []), { name: newItemName.trim(), price: Number(newItemPrice) }]);
     setNewItemName('');
     setNewItemPrice('');
   };
@@ -77,7 +77,7 @@ export default function App() {
     if (objectType === 'Многоэтажный жилой дом' || repairClass === 'Многоэтажка') ratePerM2 = rates.multi || 950;
 
     const baseTotal = area * ratePerM2;
-    const customTotal = customItems.reduce((acc, item) => acc + item.price, 0);
+    const customTotal = (customItems || []).reduce((acc, item) => acc + (item.price || 0), 0);
     const grandTotalTmt = baseTotal + customTotal;
 
     setManualResult({
@@ -124,11 +124,11 @@ export default function App() {
 
         <ManualTab
           t={t} showAdmin={showAdmin} setShowAdmin={setShowAdmin} rates={rates} setRates={setRates}
-          customItems={customItems} setCustomItems={setCustomItems} newItemName={newItemName} setNewItemName={setNewItemName}
+          customItems={customItems || []} setCustomItems={setCustomItems} newItemName={newItemName} setNewItemName={setNewItemName}
           newItemPrice={newItemPrice} setNewItemPrice={setNewItemPrice} handleAddCustomItem={handleAddCustomItem}
           objectType={objectType} setObjectType={setObjectType} area={area} setArea={setArea} repairClass={repairClass}
-          setRepairClass={setRepairClass} calcMode={calcMode} selectedWorks={selectedWorks} setSelectedWorks={setSelectedWorks}
-          DEFAULT_WORKS={DEFAULT_WORKS} handleManualCalculate={handleManualCalculate} manualResult={manualResult}
+          setRepairClass={setRepairClass} calcMode={calcMode} selectedWorks={selectedWorks || []} setSelectedWorks={setSelectedWorks}
+          DEFAULT_WORKS={DEFAULT_WORKS || []} handleManualCalculate={handleManualCalculate} manualResult={manualResult}
           formatVal={formatVal} exportToExcel={exportToExcel} setShowContract={setShowContract}
         />
 

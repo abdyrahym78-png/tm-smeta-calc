@@ -1,18 +1,19 @@
 import React from 'react';
 
 export default function ManualTab({
-  t = {}, showAdmin, setShowAdmin, rates, setRates, customItems, setCustomItems,
+  t = {}, showAdmin, setShowAdmin, rates, setRates, customItems = [], setCustomItems,
   newItemName, setNewItemName, newItemPrice, setNewItemPrice, objectType, setObjectType,
-  area, setArea, repairClass, setRepairClass, calcMode, selectedWorks, setSelectedWorks,
-  DEFAULT_WORKS, handleManualCalculate, manualResult, formatVal, exportToExcel, setShowContract
+  area, setArea, repairClass, setRepairClass, calcMode, selectedWorks = [], setSelectedWorks,
+  DEFAULT_WORKS = [], handleManualCalculate, manualResult, formatVal, exportToExcel, setShowContract
 }) {
   const toggleWork = (w) => {
-    setSelectedWorks(prev => prev.includes(w) ? prev.filter(x => x !== w) : [...prev, w]);
+    if (!setSelectedWorks) return;
+    setSelectedWorks(prev => (prev || []).includes(w) ? (prev || []).filter(x => x !== w) : [...(prev || []), w]);
   };
 
   const addCustomItem = () => {
     if (!newItemName || !newItemPrice) return;
-    setCustomItems([...customItems, { name: newItemName, price: Number(newItemPrice) }]);
+    setCustomItems([...(customItems || []), { name: newItemName, price: Number(newItemPrice) }]);
     setNewItemName('');
     setNewItemPrice('');
   };
