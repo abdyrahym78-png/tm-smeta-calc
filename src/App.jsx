@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import { i18n, DEFAULT_WORKS } from './constants';
 import ContractModal from './components/ContractModal';
 import ManualTab from './components/ManualTab';
+import FileUploader from './components/FileUploader';
+import AdminPanel from './components/AdminPanel';
 
 export default function App() {
   const [lang, setLang] = useState('RU');
   const [currency, setCurrency] = useState('TMT');
   const [usdRate, setUsdRate] = useState(19.5);
 
-  const [activeTab, setActiveTab] = useState('manual');
   const [calcMode, setCalcMode] = useState('repair');
-  const [showAdmin, setShowAdmin] = useState(true);
+  const [showAdmin, setShowAdmin] = useState(false);
   const [showContract, setShowContract] = useState(false);
 
   const [rates, setRates] = useState({ cosmetic: 350, capital: 750, designer: 1400, matRatio: 60 });
@@ -31,7 +32,7 @@ export default function App() {
 
   const handleAddCustomItem = () => {
     if (!newItemName.trim() || !newItemPrice || Number(newItemPrice) <= 0) {
-      alert('Заполните название расценки и укажите корректную сумму TMT');
+      alert('Заполните название расценки и сумму TMT');
       return;
     }
     setCustomItems([...customItems, { name: newItemName.trim(), price: Number(newItemPrice) }]);
@@ -48,7 +49,6 @@ export default function App() {
     let ratePerM2 = rates.cosmetic;
     if (repairClass === 'Капитальный') ratePerM2 = rates.capital;
     if (repairClass === 'Дизайнерский') ratePerM2 = rates.designer;
-    if (repairClass === 'Многоэтажка') ratePerM2 = 950; // Базовая расценка для многоэтажного строительства
 
     const baseTotal = area * ratePerM2;
     const customTotal = customItems.reduce((acc, item) => acc + item.price, 0);
@@ -75,7 +75,8 @@ export default function App() {
   };
 
   return (
-    <div style={{ maxWidth: '600px', margin: '0 auto', padding: '16px', fontFamily: 'sans-serif', color: '#1e293b', background: '#f8fafc', minHeight: '100vh' }}>
+    <div style={{ maxWidth: '650px', margin: '0 auto', padding: '16px', fontFamily: 'sans-serif', color: '#1e293b', background: '#f8fafc', minHeight: '100vh' }}>
+      {/* Шапка управления */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', background: '#fff', padding: '8px 12px', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
         <div style={{ display: 'flex', gap: '4px' }}>
           {['RU', 'TK', 'EN'].map(l => (
@@ -95,6 +96,7 @@ export default function App() {
 
       <h2 style={{ textAlign: 'center', color: '#1d4ed8', margin: '0 0 12px 0', fontSize: '18px' }}>{t.title}</h2>
 
+      {/* Основной калькулятор */}
       <ManualTab
         t={t} showAdmin={showAdmin} setShowAdmin={setShowAdmin} rates={rates} setRates={setRates}
         customItems={customItems} setCustomItems={setCustomItems} newItemName={newItemName} setNewItemName={setNewItemName}
@@ -105,6 +107,12 @@ export default function App() {
         formatVal={formatVal} exportToExcel={exportToExcel} setShowContract={setShowContract}
       />
 
+      {/* Блок загрузки документов/чертежей */}
+      <div style={{ marginTop: '16px' }}>
+        <FileUploader />
+      </div>
+
+      {/* Модальное окно договора */}
       <ContractModal
         show={showContract} manualResult={manualResult} clientName={clientName} setClientName={setClientName}
         contractorName={contractorName} setContractorName={setContractorName} formatVal={formatVal} t={t}
