@@ -50,9 +50,6 @@ export default function App() {
   const [selectedWorks, setSelectedWorks] = useState([1, 2, 3, 4]);
   const [manualResult, setManualResult] = useState(null);
 
-  const [clientName, setClientName] = useState('ИП "Заказчик"');
-  const [contractorName, setContractorName] = useState('ХО "Строитель-Х"');
-
   const t = i18n ? (i18n[lang] || i18n['RU']) : {};
 
   const handleAddCustomItem = () => {
@@ -77,8 +74,6 @@ export default function App() {
     if (objectType === 'Многоэтажный жилой дом' || repairClass === 'Многоэтажка') ratePerM2 = rates.multi || 950;
 
     const baseTotal = area * ratePerM2;
-    
-    // Считаем выбранные доп. работы
     const selectedWorksTotal = (DEFAULT_WORKS || [])
       .filter(w => (selectedWorks || []).includes(w.id))
       .reduce((acc, w) => acc + (w.price * area), 0);
@@ -140,13 +135,12 @@ export default function App() {
         />
 
         <div style={{ marginTop: '16px' }}>
-          <FileUploader />
+          <FileUploader formatVal={formatVal} />
         </div>
 
         {ContractModal && (
           <ContractModal
-            show={showContract} manualResult={manualResult} clientName={clientName} setClientName={setClientName}
-            contractorName={contractorName} setContractorName={setContractorName} formatVal={formatVal} t={t}
+            show={showContract} manualResult={manualResult} formatVal={formatVal} t={t}
             onClose={() => setShowContract(false)}
           />
         )}
