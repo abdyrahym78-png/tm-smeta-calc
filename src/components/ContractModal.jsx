@@ -10,6 +10,8 @@ export default function ContractModal({ show, manualResult, formatVal, t, onClos
   const contractNum = `SX-${Math.floor(1000 + Math.random() * 9000)}`;
   const qrData = `https://site-x.tm/verify?doc=${contractNum}&total=${manualResult.grandTotalTmt}`;
 
+  const baseTotal = (manualResult.materialsTmt || 0) + (manualResult.laborTmt || 0) - (manualResult.selectedWorksTotal || 0);
+
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '16px' }}>
       <style>{`
@@ -47,12 +49,16 @@ export default function ContractModal({ show, manualResult, formatVal, t, onClos
           <p style={{ margin: '4px 0' }}><strong>Объект:</strong> {address || manualResult.objectType}</p>
           <p style={{ margin: '4px 0' }}><strong>Площадь:</strong> {manualResult.area} м²</p>
           <hr style={{ border: 'none', borderTop: '1px solid #cbd5e1', margin: '10px 0' }} />
-          <p style={{ margin: '4px 0' }}>• Материалы: <strong>{formatVal(manualResult.materialsTmt)}</strong></p>
-          <p style={{ margin: '4px 0' }}>• Работы: <strong>{formatVal(manualResult.laborTmt)}</strong></p>
+
+          <p style={{ margin: '4px 0' }}>• Базовая отделка (комплекс): <strong>{formatVal(baseTotal)}</strong></p>
           {manualResult.selectedWorksTotal > 0 && (
-            <p style={{ margin: '4px 0' }}>• Доп. работы: <strong>{formatVal(manualResult.selectedWorksTotal)}</strong></p>
+            <p style={{ margin: '4px 0' }}>• Включенные доп. работы: <strong>{formatVal(manualResult.selectedWorksTotal)}</strong></p>
           )}
-          <h3 style={{ color: '#16a34a', margin: '10px 0', fontSize: '15px' }}>Общая сумма: {formatVal(manualResult.grandTotalTmt)}</h3>
+
+          <h3 style={{ color: '#16a34a', margin: '10px 0 4px 0', fontSize: '15px' }}>Общая сумма: {formatVal(manualResult.grandTotalTmt)}</h3>
+          <p style={{ margin: '0 0 10px 0', fontSize: '10px', color: '#64748b' }}>
+            (в т.ч. материалы: {formatVal(manualResult.materialsTmt)}, работы: {formatVal(manualResult.laborTmt)})
+          </p>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '20px', paddingTop: '12px', borderTop: '1px solid #cbd5e1' }}>
             <div>
