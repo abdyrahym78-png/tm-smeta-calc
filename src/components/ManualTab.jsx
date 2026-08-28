@@ -1,7 +1,7 @@
 import React from 'react';
 
 export default function ManualTab({
-  t = {}, showAdmin, setShowAdmin, rates, setRates, customItems = [], setCustomItems,
+  t = {}, lang = 'RU', showAdmin, setShowAdmin, rates, setRates, customItems = [], setCustomItems,
   newItemName, setNewItemName, newItemPrice, setNewItemPrice, objectType, setObjectType,
   area, setArea, repairClass, setRepairClass, calcMode, selectedWorks = [], setSelectedWorks,
   DEFAULT_WORKS = [], handleManualCalculate, manualResult, formatVal, exportToExcel, setShowContract
@@ -54,7 +54,7 @@ export default function ManualTab({
       <div style={{ background: '#fff', padding: '14px', borderRadius: '12px', border: '1px solid #cbd5e1' }}>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
           <div style={{ flex: 1 }}>
-            <label style={{ fontSize: '11px', fontWeight: 'bold' }}>🏢 Тип объекта:</label>
+            <label style={{ fontSize: '11px', fontWeight: 'bold' }}>🏢 {t?.objType || 'Тип объекта'}:</label>
             <select value={objectType} onChange={e => setObjectType(e.target.value)} style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #cbd5e1', marginTop: '2px', fontSize: '12px' }}>
               <option value="Квартира">Квартира</option>
               <option value="Частный дом">Частный дом</option>
@@ -63,13 +63,13 @@ export default function ManualTab({
             </select>
           </div>
           <div style={{ flex: 1 }}>
-            <label style={{ fontSize: '11px', fontWeight: 'bold' }}>📐 Площадь: {area} м²</label>
+            <label style={{ fontSize: '11px', fontWeight: 'bold' }}>📐 {t?.area || 'Площадь'}: {area} м²</label>
             <input type="range" min="10" max="1000" value={area} onChange={e => setArea(Number(e.target.value))} style={{ width: '100%', marginTop: '6px' }} />
           </div>
         </div>
 
         <div style={{ marginBottom: '12px', background: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-          <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>🛠 Включить виды работ:</label>
+          <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>🛠 {t?.worksList || 'Включить виды работ'}:</label>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
             {(DEFAULT_WORKS || []).map(w => (
               <label key={w.id} style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
@@ -78,7 +78,7 @@ export default function ManualTab({
                   checked={selectedWorks.includes(w.id)}
                   onChange={() => toggleWork(w.id)}
                 />
-                {w.name} ({w.price} TMT/{w.unit})
+                {typeof w.name === 'object' ? (w.name[lang] || w.name.RU) : w.name} ({w.price} TMT/{w.unit})
               </label>
             ))}
           </div>
@@ -90,11 +90,11 @@ export default function ManualTab({
 
         {manualResult && (
           <div style={{ marginTop: '14px', background: '#f0fdf4', padding: '12px', borderRadius: '8px', border: '1px solid #16a34a' }}>
-            <h4 style={{ margin: '0 0 6px 0', color: '#15803d', fontSize: '13px' }}>📊 Готовая смета ({manualResult.objectType}):</h4>
+            <h4 style={{ margin: '0 0 6px 0', color: '#15803d', fontSize: '13px' }}>📊 {t?.readyEstimate || 'Готовая смета'} ({manualResult.objectType}):</h4>
             <p style={{ margin: '2px 0', fontSize: '12px' }}>• {t?.materials || 'Материалы'}: <strong>{formatVal(manualResult.materialsTmt)}</strong></p>
             <p style={{ margin: '2px 0', fontSize: '12px' }}>• {t?.labor || 'Работы'}: <strong>{formatVal(manualResult.laborTmt)}</strong></p>
             {manualResult.selectedWorksTotal > 0 && (
-              <p style={{ margin: '2px 0', fontSize: '12px' }}>• Выбранные работы: <strong>{formatVal(manualResult.selectedWorksTotal)}</strong></p>
+              <p style={{ margin: '2px 0', fontSize: '12px' }}>• {t?.selectedWorks || 'Выбранные работы'}: <strong>{formatVal(manualResult.selectedWorksTotal)}</strong></p>
             )}
             <h3 style={{ color: '#16a34a', margin: '6px 0', fontSize: '15px' }}>{t?.total || 'Итого'}: {formatVal(manualResult.grandTotalTmt)}</h3>
             <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>

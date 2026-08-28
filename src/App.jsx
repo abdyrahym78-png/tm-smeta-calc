@@ -125,7 +125,7 @@ export default function App() {
         <h2 style={{ textAlign: 'center', color: '#1d4ed8', margin: '0 0 12px 0', fontSize: '18px' }}>{t?.title || 'Сметный ИИ-Сервис («Сайт Х»)'}</h2>
 
         <ManualTab
-          t={t} showAdmin={showAdmin} setShowAdmin={setShowAdmin} rates={rates} setRates={setRates}
+          t={t} lang={lang} showAdmin={showAdmin} setShowAdmin={setShowAdmin} rates={rates} setRates={setRates}
           customItems={customItems || []} setCustomItems={setCustomItems} newItemName={newItemName} setNewItemName={setNewItemName}
           newItemPrice={newItemPrice} setNewItemPrice={setNewItemPrice} handleAddCustomItem={handleAddCustomItem}
           objectType={objectType} setObjectType={setObjectType} area={area} setArea={setArea} repairClass={repairClass}
@@ -135,7 +135,7 @@ export default function App() {
         />
 
         <div style={{ marginTop: '16px' }}>
-          <FileUploader formatVal={formatVal} />
+          <FileUploader formatVal={formatVal} t={t} />
         </div>
 
         {ContractModal && (
