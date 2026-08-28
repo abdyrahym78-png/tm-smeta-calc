@@ -31,11 +31,21 @@ export default function ManualTab({
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
             <div>
               <label style={{ fontSize: '10px', fontWeight: 'bold' }}>Косметический (TMT/м²):</label>
-              <input type="number" value={rates?.cosmetic || 350} onChange={e => setRates({...rates, cosmetic: Number(e.target.value)})} style={{ width: '100%', padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }} />
+              <input 
+                type="number" 
+                value={rates?.cosmetic ?? ''} 
+                onChange={e => setRates({...rates, cosmetic: e.target.value === '' ? '' : Number(e.target.value)})} 
+                style={{ width: '100%', padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }} 
+              />
             </div>
             <div>
               <label style={{ fontSize: '10px', fontWeight: 'bold' }}>Капитальный (TMT/м²):</label>
-              <input type="number" value={rates?.capital || 750} onChange={e => setRates({...rates, capital: Number(e.target.value)})} style={{ width: '100%', padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }} />
+              <input 
+                type="number" 
+                value={rates?.capital ?? ''} 
+                onChange={e => setRates({...rates, capital: e.target.value === '' ? '' : Number(e.target.value)})} 
+                style={{ width: '100%', padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }} 
+              />
             </div>
           </div>
 
@@ -47,7 +57,6 @@ export default function ManualTab({
               <button onClick={handleAddCustomItem} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: '4px', padding: '0 12px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>+</button>
             </div>
 
-            {/* Список добавленных пользовательских позиций */}
             {customItems.length > 0 && (
               <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {customItems.map((item, idx) => (
