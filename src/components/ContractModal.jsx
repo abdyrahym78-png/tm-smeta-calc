@@ -12,6 +12,13 @@ export default function ContractModal({ show, manualResult, formatVal, t, onClos
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '16px' }}>
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          #contract-print-area, #contract-print-area * { visibility: visible; }
+          #contract-print-area { position: absolute; left: 0; top: 0; width: 100%; border: none !important; background: #fff !important; }
+        }
+      `}</style>
       <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', maxWidth: '500px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
           <h3 style={{ margin: 0, color: '#1e293b', fontSize: '16px' }}>📜 Договор № {contractNum}</h3>
@@ -33,24 +40,27 @@ export default function ContractModal({ show, manualResult, formatVal, t, onClos
           />
         </div>
 
-        <div id="contract-print-area" style={{ border: '1px dashed #cbd5e1', padding: '12px', borderRadius: '8px', background: '#f8fafc', fontSize: '11px', lineHeight: '1.5' }}>
-          <p style={{ textAlign: 'center', fontWeight: 'bold', margin: '0 0 8px 0' }}>ДОГОВОР ПОДРЯДА № {contractNum}</p>
-          <p><strong>Дата:</strong> {manualResult.date}</p>
-          <p><strong>Заказчик:</strong> {clientName || '________________________'}</p>
-          <p><strong>Объект:</strong> {address || manualResult.objectType}</p>
-          <p><strong>Площадь:</strong> {manualResult.area} м²</p>
-          <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '8px 0' }} />
-          <p>• Материалы: {formatVal(manualResult.materialsTmt)}</p>
-          <p>• Работы: {formatVal(manualResult.laborTmt)}</p>
-          <p style={{ fontSize: '13px', fontWeight: 'bold', color: '#16a34a' }}>Общая сумма: {formatVal(manualResult.grandTotalTmt)}</p>
+        <div id="contract-print-area" style={{ border: '1px dashed #cbd5e1', padding: '16px', borderRadius: '8px', background: '#f8fafc', fontSize: '12px', lineHeight: '1.6' }}>
+          <p style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '14px', margin: '0 0 10px 0' }}>ДОГОВОР ПОДРЯДА № {contractNum}</p>
+          <p style={{ margin: '4px 0' }}><strong>Дата:</strong> {manualResult.date}</p>
+          <p style={{ margin: '4px 0' }}><strong>Заказчик:</strong> {clientName || '________________________'}</p>
+          <p style={{ margin: '4px 0' }}><strong>Объект:</strong> {address || manualResult.objectType}</p>
+          <p style={{ margin: '4px 0' }}><strong>Площадь:</strong> {manualResult.area} м²</p>
+          <hr style={{ border: 'none', borderTop: '1px solid #cbd5e1', margin: '10px 0' }} />
+          <p style={{ margin: '4px 0' }}>• Материалы: <strong>{formatVal(manualResult.materialsTmt)}</strong></p>
+          <p style={{ margin: '4px 0' }}>• Работы: <strong>{formatVal(manualResult.laborTmt)}</strong></p>
+          {manualResult.selectedWorksTotal > 0 && (
+            <p style={{ margin: '4px 0' }}>• Доп. работы: <strong>{formatVal(manualResult.selectedWorksTotal)}</strong></p>
+          )}
+          <h3 style={{ color: '#16a34a', margin: '10px 0', fontSize: '15px' }}>Общая сумма: {formatVal(manualResult.grandTotalTmt)}</h3>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '16px', paddingTop: '10px', borderTop: '1px solid #e2e8f0' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '20px', paddingTop: '12px', borderTop: '1px solid #cbd5e1' }}>
             <div>
-              <p style={{ margin: 0, fontSize: '10px', color: '#64748b' }}>Проверка подлинности:</p>
-              <QRCodeSVG value={qrData} size={70} />
+              <p style={{ margin: '0 0 4px 0', fontSize: '10px', color: '#64748b' }}>Проверка подлинности:</p>
+              <QRCodeSVG value={qrData} size={75} />
             </div>
-            <div style={{ textAlign: 'right', fontSize: '10px' }}>
-              <p style={{ margin: '0 0 20px 0' }}>Подпись подрядчика: __________</p>
+            <div style={{ textAlign: 'right', fontSize: '11px' }}>
+              <p style={{ margin: '0 0 24px 0' }}>Подпись подрядчика: __________</p>
               <p style={{ margin: 0 }}>Подпись заказчика: __________</p>
             </div>
           </div>
