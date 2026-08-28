@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
-export default function ContractModal({ show, manualResult, formatVal, t, onClose }) {
+export default function ContractModal({ show, manualResult, formatVal, onClose }) {
   const [clientName, setClientName] = useState('');
   const [address, setAddress] = useState('');
 
@@ -10,7 +10,7 @@ export default function ContractModal({ show, manualResult, formatVal, t, onClos
   const contractNum = `SX-${Math.floor(1000 + Math.random() * 9000)}`;
   const qrData = `https://site-x.tm/verify?doc=${contractNum}&total=${manualResult.grandTotalTmt}`;
 
-  const baseTotal = (manualResult.materialsTmt || 0) + (manualResult.laborTmt || 0) - (manualResult.selectedWorksTotal || 0);
+  const baseTotal = manualResult.baseSubtotal - manualResult.selectedWorksTotal;
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '16px' }}>
@@ -53,6 +53,12 @@ export default function ContractModal({ show, manualResult, formatVal, t, onClos
           <p style={{ margin: '4px 0' }}>• Базовая отделка (комплекс): <strong>{formatVal(baseTotal)}</strong></p>
           {manualResult.selectedWorksTotal > 0 && (
             <p style={{ margin: '4px 0' }}>• Включенные доп. работы: <strong>{formatVal(manualResult.selectedWorksTotal)}</strong></p>
+          )}
+
+          {manualResult.enableTax && manualResult.taxPercent > 0 && (
+            <p style={{ margin: '4px 0', color: '#475569' }}>
+              • НДС ({manualResult.taxPercent}% {manualResult.taxMode === 'add' ? 'начислен сверху' : 'в том числе'}): <strong>{formatVal(manualResult.taxAmount)}</strong>
+            </p>
           )}
 
           <h3 style={{ color: '#16a34a', margin: '10px 0 4px 0', fontSize: '15px' }}>Общая сумма: {formatVal(manualResult.grandTotalTmt)}</h3>

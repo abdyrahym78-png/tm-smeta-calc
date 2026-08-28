@@ -1,150 +1,175 @@
-import React, { useState, Component } from 'react';
-import { i18n, DEFAULT_WORKS } from './constants';
-import ManualTab from './components/ManualTab';
-import FileUploader from './components/FileUploader';
+import React, { useState } from 'react';
+import TaxSelector, { TAX_RATES } from './components/TaxSelector';
 import ContractModal from './components/ContractModal';
 
-class ErrorBoundary extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-  componentDidCatch(error, errorInfo) {
-    console.error("React Error Boundary caught an error", error, errorInfo);
-  }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div style={{ padding: '20px', color: 'red', background: '#fff', margin: '20px', borderRadius: '8px', border: '2px solid red' }}>
-          <h3>❌ Ошибка отрисовки компонента:</h3>
-          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '12px' }}>
-            {this.state.error && this.state.error.toString()}
-          </pre>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
 export default function App() {
-  const [lang, setLang] = useState('RU');
-  const [currency, setCurrency] = useState('TMT');
-  const [usdRate, setUsdRate] = useState(19.5);
+  const [area, setArea] = useState(60);
+  const [objectType, setObjectType] = useState('Многоэтажный жилой дом');
+  const [selectedWorks, setSelectedWorks] = useState({
+    plumbing: true,
+    electric: true,
+    decor: false
+  });
 
-  const [calcMode, setCalcMode] = useState('repair');
-  const [showAdmin, setShowAdmin] = useState(false);
+  // Состояние НДС
+  const [enableTax, setEnableTax] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState('TM');
+  const [customTax, setCustomTax] = useState(15);
+  const [taxMode, setTaxMode] = useState('add'); // 'add' или 'include'
+
   const [showContract, setShowContract] = useState(false);
 
-  const [rates, setRates] = useState({ cosmetic: 350, capital: 750, designer: 1400, multi: 950, matRatio: 60 });
-  const [customItems, setCustomItems] = useState([]);
-  const [newItemName, setNewItemName] = useState('');
-  const [newItemPrice, setNewItemPrice] = useState('');
+  // Ставки работ и материалов за м²
+  const baseMaterialRate = 680; // TMT/м²
+  const baseLaborRate = 454;   // TMT/м²
 
-  const [objectType, setObjectType] = useState('Многоэтажный жилой дом');
-  const [area, setArea] = useState(60);
-  const [repairClass, setRepairClass] = useState('Капитальный');
-  const [selectedWorks, setSelectedWorks] = useState([1, 2, 3, 4]);
-  const [manualResult, setManualResult] = useState(null);
+  // Стоимость доп. работ
+  const extraWorksPrices = {
+    plumbing: 4500,
+    electric: 6600,
+    decor: 8000
+  };
 
-  const t = i18n ? (i18n[lang] || i18n['RU']) : {};
+  const selectedWorksTotal = Object.keys(selectedWorks).reduce((sum, key) => {
+    return selectedWorks[key] ? sum + extraWorksPrices[key] : sum;
+  }, 0);
 
-  const handleAddCustomItem = () => {
-    if (!newItemName.trim() || !newItemPrice || Number(newItemPrice) <= 0) {
-      alert('Заполните название расценки и сумму TMT');
-      return;
+  const materialsTmt = area * baseMaterialRate;
+  const laborTmt = area * baseLaborRate;
+  const baseSubtotal = materialsTmt + laborTmt + selectedWorksTotal;
+
+  // Определение действующей процентной ставки НДС
+  let taxPercent = 0;
+  if (enableTax) {
+    if (selectedCountry === 'CUSTOM') {
+      taxPercent = Number(customTax) || 0;
+    } else {
+      const found = TAX_RATES.find(c => c.code === selectedCountry);
+      taxPercent = found ? found.rate : 15;
     }
-    setCustomItems([...(customItems || []), { name: newItemName.trim(), price: Number(newItemPrice) }]);
-    setNewItemName('');
-    setNewItemPrice('');
-  };
+  }
 
-  const formatVal = (valInTmt) => {
-    if (currency === 'USD') return `${(valInTmt / usdRate).toFixed(2)} USD`;
-    return `${Math.round(valInTmt)} TMT`;
-  };
+  // Расчет НДС
+  let taxAmount = 0;
+  let grandTotalTmt = baseSubtotal;
 
-  const handleManualCalculate = () => {
-    let ratePerM2 = rates.cosmetic;
-    if (repairClass === 'Капитальный') ratePerM2 = rates.capital;
-    if (repairClass === 'Дизайнерский') ratePerM2 = rates.designer;
-    if (objectType === 'Многоэтажный жилой дом' || repairClass === 'Многоэтажка') ratePerM2 = rates.multi || 950;
+  if (enableTax && taxPercent > 0) {
+    if (taxMode === 'add') {
+      taxAmount = (baseSubtotal * taxPercent) / 100;
+      grandTotalTmt = baseSubtotal + taxAmount;
+    } else {
+      // 'include' - в том числе
+      taxAmount = baseSubtotal - (baseSubtotal / (1 + taxPercent / 100));
+      grandTotalTmt = baseSubtotal;
+    }
+  }
 
-    const baseTotal = area * ratePerM2;
-    const selectedWorksTotal = (DEFAULT_WORKS || [])
-      .filter(w => (selectedWorks || []).includes(w.id))
-      .reduce((acc, w) => acc + (w.price * area), 0);
+  const formatVal = (val) => `${Math.round(val).toLocaleString()} TMT`;
 
-    const customTotal = (customItems || []).reduce((acc, item) => acc + (item.price || 0), 0);
-    const grandTotalTmt = baseTotal + selectedWorksTotal + customTotal;
-
-    setManualResult({
-      area, objectType, repairClass, calcMode,
-      materialsTmt: grandTotalTmt * (rates.matRatio / 100),
-      laborTmt: grandTotalTmt * (1 - rates.matRatio / 100),
-      selectedWorksTotal,
-      grandTotalTmt,
-      date: new Date().toLocaleDateString()
-    });
-  };
-
-  const exportToExcel = () => {
-    if (!manualResult) return;
-    const csvContent = "data:text/csv;charset=utf-8," + `Параметр,Значение (${currency})\nОбъект,${manualResult.objectType}\nПлощадь,${manualResult.area}\nИТОГО,${formatVal(manualResult.grandTotalTmt)}\n`;
-    const link = document.createElement("a");
-    link.setAttribute("href", encodeURI(csvContent));
-    link.setAttribute("download", `smeta_site_x_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const manualResult = {
+    date: new Date().toLocaleDateString('ru-RU'),
+    objectType,
+    area,
+    materialsTmt,
+    laborTmt,
+    selectedWorksTotal,
+    baseSubtotal,
+    enableTax,
+    taxPercent,
+    taxAmount,
+    taxMode,
+    grandTotalTmt
   };
 
   return (
-    <ErrorBoundary>
-      <div style={{ maxWidth: '650px', margin: '0 auto', padding: '16px', fontFamily: 'sans-serif', color: '#1e293b', background: '#f8fafc', minHeight: '100vh' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', background: '#fff', padding: '8px 12px', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
-          <div style={{ display: 'flex', gap: '4px' }}>
-            {['RU', 'TK', 'EN'].map(l => (
-              <button key={l} onClick={() => setLang(l)} style={{ padding: '4px 8px', fontSize: '11px', fontWeight: 'bold', borderRadius: '4px', border: 'none', cursor: 'pointer', background: lang === l ? '#2563eb' : '#f1f5f9', color: lang === l ? '#fff' : '#475569' }}>{l}</button>
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-            <select value={currency} onChange={e => setCurrency(e.target.value)} style={{ padding: '4px', fontSize: '11px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: 'bold' }}>
-              <option value="TMT">TMT (m)</option>
-              <option value="USD">USD ($)</option>
-            </select>
-            {currency === 'USD' && (
-              <input type="number" value={usdRate} onChange={e => setUsdRate(Number(e.target.value))} style={{ width: '45px', padding: '2px', fontSize: '11px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+    <div style={{ maxWidth: '480px', margin: '0 auto', padding: '16px', fontFamily: 'system-ui, sans-serif', color: '#0f172a' }}>
+      <div style={{ background: '#fff', padding: '20px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 16px 0', color: '#1e293b', textAlign: 'center' }}>
+          🏗️ Сметный Калькулятор «Сайт Х»
+        </h2>
+
+        {/* Параметры объекта */}
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#64748b' }}>Тип объекта:</label>
+          <input 
+            type="text" 
+            value={objectType} 
+            onChange={e => setObjectType(e.target.value)}
+            style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', marginTop: '4px', fontSize: '13px' }}
+          />
+        </div>
+
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#64748b' }}>Площадь (м²):</label>
+          <input 
+            type="number" 
+            value={area} 
+            onChange={e => setArea(Number(e.target.value))}
+            style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', marginTop: '4px', fontSize: '13px' }}
+          />
+        </div>
+
+        {/* Доп. работы */}
+        <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', marginBottom: '16px', border: '1px solid #e2e8f0' }}>
+          <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '8px' }}>Дополнительные опции:</span>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', marginBottom: '6px', cursor: 'pointer' }}>
+            <input type="checkbox" checked={selectedWorks.plumbing} onChange={e => setSelectedWorks({...selectedWorks, plumbing: e.target.checked})} />
+            Сантехнические работы (+4 500 TMT)
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', marginBottom: '6px', cursor: 'pointer' }}>
+            <input type="checkbox" checked={selectedWorks.electric} onChange={e => setSelectedWorks({...selectedWorks, electric: e.target.checked})} />
+            Электромонтажные работы (+6 600 TMT)
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', cursor: 'pointer' }}>
+            <input type="checkbox" checked={selectedWorks.decor} onChange={e => setSelectedWorks({...selectedWorks, decor: e.target.checked})} />
+            Дизайнерский декор (+8 000 TMT)
+          </label>
+        </div>
+
+        {/* Блок настройки НДС */}
+        <TaxSelector 
+          enableTax={enableTax}
+          setEnableTax={setEnableTax}
+          selectedCountry={selectedCountry}
+          setSelectedCountry={setSelectedCountry}
+          customTax={customTax}
+          setCustomTax={setCustomTax}
+          taxMode={taxMode}
+          setTaxMode={setTaxMode}
+        />
+
+        {/* Сводка стоимости */}
+        <div style={{ background: '#1e293b', color: '#fff', padding: '16px', borderRadius: '12px', marginBottom: '16px' }}>
+          <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>Предварительный расчет:</div>
+          <div style={{ fontSize: '22px', fontWeight: 'bold', color: '#4ade80' }}>{formatVal(grandTotalTmt)}</div>
+          
+          <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #334155', fontSize: '11px', color: '#cbd5e1', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div>• Материалы: {formatVal(materialsTmt)}</div>
+            <div>• Работы: {formatVal(laborTmt)}</div>
+            {selectedWorksTotal > 0 && <div>• Доп. работы: {formatVal(selectedWorksTotal)}</div>}
+            {enableTax && taxPercent > 0 && (
+              <div style={{ color: '#facc15' }}>
+                • НДС ({taxPercent}% {taxMode === 'add' ? 'сверху' : 'в т.ч.'}): {formatVal(taxAmount)}
+              </div>
             )}
           </div>
         </div>
 
-        <h2 style={{ textAlign: 'center', color: '#1d4ed8', margin: '0 0 12px 0', fontSize: '18px' }}>{t?.title || 'Сметный ИИ-Сервис («Сайт Х»)'}</h2>
-
-        <ManualTab
-          t={t} lang={lang} showAdmin={showAdmin} setShowAdmin={setShowAdmin} rates={rates} setRates={setRates}
-          customItems={customItems || []} setCustomItems={setCustomItems} newItemName={newItemName} setNewItemName={setNewItemName}
-          newItemPrice={newItemPrice} setNewItemPrice={setNewItemPrice} handleAddCustomItem={handleAddCustomItem}
-          objectType={objectType} setObjectType={setObjectType} area={area} setArea={setArea} repairClass={repairClass}
-          setRepairClass={setRepairClass} calcMode={calcMode} selectedWorks={selectedWorks || []} setSelectedWorks={setSelectedWorks}
-          DEFAULT_WORKS={DEFAULT_WORKS || []} handleManualCalculate={handleManualCalculate} manualResult={manualResult}
-          formatVal={formatVal} exportToExcel={exportToExcel} setShowContract={setShowContract}
-        />
-
-        <div style={{ marginTop: '16px' }}>
-          <FileUploader formatVal={formatVal} t={t} />
-        </div>
-
-        {ContractModal && (
-          <ContractModal
-            show={showContract} manualResult={manualResult} formatVal={formatVal} t={t}
-            onClose={() => setShowContract(false)}
-          />
-        )}
+        <button 
+          onClick={() => setShowContract(true)}
+          style={{ width: '100%', padding: '12px', background: '#7c3aed', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}
+        >
+          📄 Сформировать Договор
+        </button>
       </div>
-    </ErrorBoundary>
+
+      {/* Модальное окно договора */}
+      <ContractModal 
+        show={showContract}
+        manualResult={manualResult}
+        formatVal={formatVal}
+        onClose={() => setShowContract(false)}
+      />
+    </div>
   );
 }
