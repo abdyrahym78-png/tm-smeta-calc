@@ -29,13 +29,27 @@ export default function App() {
 
   const t = i18n[lang];
 
+  const handleAddCustomItem = () => {
+    if (!newItemName.trim() || !newItemPrice || Number(newItemPrice) <= 0) {
+      alert('Заполните название расценки и укажите корректную сумму TMT');
+      return;
+    }
+    setCustomItems([...customItems, { name: newItemName.trim(), price: Number(newItemPrice) }]);
+    setNewItemName('');
+    setNewItemPrice('');
+  };
+
   const formatVal = (valInTmt) => {
     if (currency === 'USD') return `${(valInTmt / usdRate).toFixed(2)} USD`;
     return `${Math.round(valInTmt)} TMT`;
   };
 
   const handleManualCalculate = () => {
-    const ratePerM2 = repairClass === 'Косметический' ? rates.cosmetic : repairClass === 'Капитальный' ? rates.capital : rates.designer;
+    let ratePerM2 = rates.cosmetic;
+    if (repairClass === 'Капитальный') ratePerM2 = rates.capital;
+    if (repairClass === 'Дизайнерский') ratePerM2 = rates.designer;
+    if (repairClass === 'Многоэтажка') ratePerM2 = 950; // Базовая расценка для многоэтажного строительства
+
     const baseTotal = area * ratePerM2;
     const customTotal = customItems.reduce((acc, item) => acc + item.price, 0);
     const grandTotalTmt = baseTotal + customTotal;
@@ -84,11 +98,11 @@ export default function App() {
       <ManualTab
         t={t} showAdmin={showAdmin} setShowAdmin={setShowAdmin} rates={rates} setRates={setRates}
         customItems={customItems} setCustomItems={setCustomItems} newItemName={newItemName} setNewItemName={setNewItemName}
-        newItemPrice={newItemPrice} setNewItemPrice={setNewItemPrice} objectType={objectType} setObjectType={setObjectType}
-        area={area} setArea={setArea} repairClass={repairClass} setRepairClass={setRepairClass} calcMode={calcMode}
-        selectedWorks={selectedWorks} setSelectedWorks={setSelectedWorks} DEFAULT_WORKS={DEFAULT_WORKS}
-        handleManualCalculate={handleManualCalculate} manualResult={manualResult} formatVal={formatVal}
-        exportToExcel={exportToExcel} setShowContract={setShowContract}
+        newItemPrice={newItemPrice} setNewItemPrice={setNewItemPrice} handleAddCustomItem={handleAddCustomItem}
+        objectType={objectType} setObjectType={setObjectType} area={area} setArea={setArea} repairClass={repairClass}
+        setRepairClass={setRepairClass} calcMode={calcMode} selectedWorks={selectedWorks} setSelectedWorks={setSelectedWorks}
+        DEFAULT_WORKS={DEFAULT_WORKS} handleManualCalculate={handleManualCalculate} manualResult={manualResult}
+        formatVal={formatVal} exportToExcel={exportToExcel} setShowContract={setShowContract}
       />
 
       <ContractModal
